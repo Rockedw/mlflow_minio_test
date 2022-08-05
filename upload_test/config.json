@@ -1,0 +1,7 @@
+{
+  "model_path": [
+    { "model1": "model1.xxx.pth" },
+    { "model2": "model2.xxx.pth" },
+    { "model3": "model3.xxx.pth" }
+  ]
+}
