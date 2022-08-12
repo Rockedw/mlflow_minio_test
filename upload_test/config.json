@@ -1,7 +1,5 @@
 {
-  "model_path": [
-    { "model1": "model1.xxx.pth" },
-    { "model2": "model2.xxx.pth" },
-    { "model3": "model3.xxx.pth" }
-  ]
+  "model_path": {
+     "mrc_roberta_wwm_ext_large": "/home/mlflow_minio_test/0/470b90d0a3724ea78496e247817717ac/artifacts/mode"
+  }
 }

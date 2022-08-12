@@ -19,21 +19,23 @@ def download_directory(
     )
 
     bucket = resource.Bucket(bucket_name)
-
+    save_path = 'C://temp/'
     for obj in bucket.objects.filter(Prefix=path):
-        if not os.path.exists(os.path.dirname(obj.key)):
-            os.makedirs(os.path.dirname(obj.key))
+        if not os.path.exists(os.path.dirname(save_path+obj.key)):
+            os.makedirs(os.path.dirname(save_path+obj.key))
         key = obj.key
         print(f'Downloading {key}')
-        bucket.download_file(key, key)
+        print('./data/'+key)
+        bucket.download_file(Key=key, Filename=save_path+key)
 
 
 if __name__ == '__main__':
-    path = '0/072084f402a942bf8dad8b4708502c08/artifacts'
-    download_directory(bucket_name='mlflow', path=path, access_key='minioadmin', secret_key='minioadmin',
+    path = '0/36fce13f7d444ecb86791a82c6e538e2/artifacts/model'
+    # path = '3/ddc7779843a9495b9ad96e0bca7a6b28/artifacts/iris_rf'
+    download_directory(bucket_name='models', path=path, access_key='minioadmin', secret_key='minioadmin',
                        endpoint_url='http://39.105.6.98:43098')
-    mlflow.projects.run(uri=path + '/model', env_manager='conda')
-    mlflow.projects.SubmittedRun
+    # mlflow.projects.run(uri=path + '/model', env_manager='conda')
+    # mlflow.projects.SubmittedRun
     # project_uri = "https://github.com/mlflow/mlflow-example"
     # params = {"alpha": 0.5, "l1_ratio": 0.01}
 
