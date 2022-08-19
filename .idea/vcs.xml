@@ -5,6 +5,9 @@
     <mapping directory="$PROJECT_DIR$/1" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/first_repo" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/git_repo" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/mlruns/0/b9eba62e371c4296b161d437d670d845/artifacts/model/Test" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/mlruns/0/b9eba62e371c4296b161d437d670d845/artifacts/model/sklearn_elasticnet_wine" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/mlruns/0/b9eba62e371c4296b161d437d670d845/artifacts/model/test_repostory" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/repos/rock/1" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/repos/rock/2" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/repos/rock/3" vcs="Git" />

@@ -1,3 +1,4 @@
+# -*- coding: UTF-8 -*-
 import stat
 import boto3
 from flask import Flask, request
@@ -181,9 +182,6 @@ def query_file_by_owner_and_name_and_branch():
         path = './temp/repos/' + owner_name + '/' + repo_name + '/' + temp_version + '/' + repo_name
     else:
         path = './repos/' + owner_name + '/' + repo_name
-    print('*************************************************')
-    print(path)
-    print('*************************************************')
     if branch_name is not None:
         if not os.path.exists(path):
             return JsonResponse.error(msg='There is no git directory').to_dict()
@@ -199,14 +197,11 @@ def query_file_by_owner_and_name_and_branch():
 def query_all_model():
     model_list = Model.query.all()
     models = {}
-    res = []
     for model in model_list:
         if model.name not in models:
             models[model.name] = [{'model_version': model.version, 'model_source': model.source}]
         else:
-            model[model.name].append({'model_version': model.version, 'model_source': model.source})
-    # for key, value in models.items():
-    #     res.append({key: value})
+            models[model.name].append({'model_version': model.version, 'model_source': model.source})
     return JsonResponse.success(data=models).to_dict()
 
 
@@ -241,35 +236,32 @@ def change_branch_by_name():
     return JsonResponse.success(data=os.getcwd()).to_dict()
 
 
-@app.route('/run_mlflow_project_by_name_and_branch', methods=['POST'])
+@app.route('/run_mlflow_project', methods=['POST'])
 def run_mlflow_project():
+    print('run run run run run run run')
     data = request.json
     owner_name = data.get('owner_name')
     repo_name = data.get('repo_name')
     branch_name = data.get('branch_name')
     update_time = data.get('update_time')
-
-    to_path = './repos/' + owner_name + repo_name
-    repo = None
-    if not os.path.exists(to_path):
-        # repo = Repo(to_path)
-        # remote = repo.remote()
-        # remote.fetch()
-        # 删除本地文件
-        # rmtree(to_path)
+    temp_version = data.get('temp_version')
+    version = './temp/repos/' + owner_name + '/' + repo_name + '/' + temp_version
+    path = version+ '/' + repo_name
+    print('path : ' + path)
+    if not os.path.exists(path):
+        print('nothing')
         return JsonResponse.error(msg='There is no git directory').to_dict()
     cwd = os.getcwd()
-    if not os.path.exists(to_path + '/.git'):
-        print(to_path + '/.git 不存在')
-        query_branches_by_repo_name_and_owner(repo_name=repo_name, owner_name=owner_name, update_time=update_time)
+    if not os.path.exists(path + '/.git'):
+        print(path + '/.git 不存在')
     command = 'cd ' + cwd + ' && ' + \
-              'cd ' + repo_name + ' && ' + \
-              'git checkout ' + branch_name + ' && ' + \
+              'cd ' + path + ' && ' + \
               'rm -rf .git &&' + \
               'cd ' + cwd + ' && ' + \
-              'mlflow run ' + cwd + '/' + repo_name
+              'mlflow run ' + path
     print(command)
     cmd(command)
+    rmtree(version)
 
     return JsonResponse.success(data=os.getcwd()).to_dict()
 

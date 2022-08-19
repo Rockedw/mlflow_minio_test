@@ -72,30 +72,6 @@ def cmd(command):
         print("失败")
 
 
-class Node:
-    def __init__(self, name, path, is_dir=False):
-        if is_dir:
-            self.children = []
-        else:
-            self.children = None
-        self.name = name
-        self.path = path
-
-    def append_child(self, child):
-        self.children.append(child)
-
-
-# def scan_dir(path, head: Node):
-#     for name in os.listdir(path):
-#         if os.path.isdir(path + os.sep + name):
-#             node = Node(is_dir=True, path=path + os.sep + name, name=name)
-#             head.append_child(node)
-#             scan_dir(path + os.sep + name, node)
-#         else:
-#             node = Node(is_dir=False, path=path + os.sep + name, name=name)
-#             head.append_child(node)
-
-
 def scan_dir(path, head: dict = None):
     if os.path.isdir(path):
         if head is None:
@@ -116,6 +92,8 @@ def scan_dir(path, head: dict = None):
 
 
 if __name__ == '__main__':
-    path = r'C:\Users\wangyan\PycharmProjects\MLFlow\repos'
-    head = scan_dir(path)
-    print(str(head))
+    # path = r'C:/Users/wangyan/PycharmProjects/MLFlow/repos'
+    # head = scan_dir(path)
+    # print(str(head))
+    command = 'cd C:/Users/wangyan/PycharmProjects/MLFlow && cd ./temp/repos/rock/second_repo/5/second_repo && rm -rf .git &&cd C:/Users/wangyan/PycharmProjects/MLFlow && mlflow run ./temp/repos/rock/second_repo/5/second_repo'
+    os.system(command)
