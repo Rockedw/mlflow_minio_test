@@ -11,13 +11,16 @@ def transform(model_path):
 
 
 if __name__ == "__main__":
-    model_path = r'C:\Users\wangyan\PycharmProjects\MLFlow\0\0d47d35713ef483ebd245be79c516719\artifacts\model'
-    mlflow.tracking.set_tracking_uri('http://39.105.6.98:43100')
-    mlflow.log_artifacts(local_dir=model_path, artifact_path='model')
-    artifact_uri = mlflow.get_artifact_uri()
-    print("Artifact uri: {}".format(artifact_uri))
-    mv = mlflow.register_model(artifact_uri, "model1")
-    print("Name: {}".format(mv.name))
-    print("Version: {}".format(mv.version))
+    # model_path = r'C:\Users\wangyan\PycharmProjects\MLFlow\0\0d47d35713ef483ebd245be79c516719\artifacts\model'
+    # mlflow.tracking.set_tracking_uri('http://39.105.6.98:43100')
+    # mlflow.log_artifacts(local_dir=model_path, artifact_path='model')
+    # artifact_uri = mlflow.get_artifact_uri()
+    # print("Artifact uri: {}".format(artifact_uri))
+    # mv = mlflow.register_model(artifact_uri, "model1")
+    # print("Name: {}".format(mv.name))
+    # print("Version: {}".format(mv.version))
+    with open('s3://models/0/3de4bc5ed26348229ce9bd8a19472817/artifacts/model/conda.yaml') as f:
+        print(f.readline())
+
 
     # upload(model_path)
