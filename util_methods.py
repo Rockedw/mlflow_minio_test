@@ -2,14 +2,14 @@ import stat
 import boto3
 import os
 import subprocess
+from config import Config
 
-bucket_name = 'models'
-access_key = 'minioadmin'
-secret_key = 'minioadmin'
-endpoint_url = 'http://39.105.6.98:43099'  # minio server地址
-git_url = 'http://39.105.6.98:43000'  # gitea地址
+bucket_name = Config.bucket_name
+access_key = Config.access_key
+secret_key = Config.secret_key
+endpoint_url = Config.endpoint_url
+git_url = Config.git_url
 
-from JsonResponse import JsonResponse
 
 
 def rmtree(top):
@@ -28,7 +28,7 @@ def rmtree(top):
     os.rmdir(top)
 
 
-def download_directory(download_path, save_path='./'):
+def download_directory(download_path: str, save_path='C://temp'):
     """
     从S3中下载模型到本地
     :param download_path:
@@ -36,6 +36,10 @@ def download_directory(download_path, save_path='./'):
     :return:
     """
     # bucket_name = 'models'
+    print(save_path)
+    print('download ' + download_path)
+    download_path = download_path.replace('s3://models', '')
+    print('download ' + download_path)
     resource = boto3.resource(
         's3',
         aws_access_key_id=access_key,

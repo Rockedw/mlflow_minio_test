@@ -1,6 +1,7 @@
 # -*- coding: UTF-8 -*-
 import stat
 import boto3
+import mlflow
 from flask import Flask, request
 from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
@@ -22,14 +23,17 @@ db = SQLAlchemy(app)
 
 app.config.from_object(Config)
 
-bucket_name = 'models'
-access_key = 'minioadmin'
-secret_key = 'minioadmin'
-endpoint_url = 'http://39.105.6.98:43099'  # minio server地址
-git_url = 'http://39.105.6.98:43000'  # gitea地址
+bucket_name = Config.bucket_name
+access_key = Config.access_key
+secret_key = Config.secret_key
+endpoint_url = Config.endpoint_url
+git_url = Config.git_url
 
 
 class Repository(db.Model):
+    """
+    代码仓库
+    """
     __tablename__ = 'repository'
     __bind_key__ = 'gitea'
     id = db.Column(db.Integer, primary_key=True, index=True)
@@ -41,14 +45,21 @@ class Repository(db.Model):
 
 
 class Model(db.Model):
+    """
+    模型
+    """
     __tablename__ = 'model_versions'
     __bind_key__ = 'mlflow'
     name = db.Column('name', db.String(256), primary_key=True)
     version = db.Column('version', db.Integer, primary_key=True)
     source = db.Column('source', db.String(500))
+    create_time = db.Column('creation_time', db.Integer)
 
 
 class Task(db.Model):
+    """
+    任务
+    """
     __tablename__ = 'task'
     __bind_key__ = 'gitea'
     id = db.Column(db.Integer, primary_key=True, index=True)
@@ -56,6 +67,9 @@ class Task(db.Model):
 
 
 class TaskRelation(db.Model):
+    """
+    代码仓库和任务的关系
+    """
     __tablename__ = 'task_relation'
     __bind_key__ = 'gitea'
     id = db.Column(db.Integer, primary_key=True, index=True)
@@ -72,8 +86,19 @@ class TaskRelation(db.Model):
 #     return JsonResponse.error(msg=str(e)).to_dict()
 
 
+def get_model_source(name, version):
+    source = Model.query.filter_by(name=name, version=int(version)).all()
+    if len(source) > 0:
+        print(source[0].source)
+        return source[0].source
+
+
 @app.route('/query_all_task', methods=['GET'])
 def query_all_task():
+    """
+    获取所有的任务
+    :return:
+    """
     print('query all task')
     tasks = Task.query.all()
     res = []
@@ -84,6 +109,10 @@ def query_all_task():
 
 @app.route('/query_repo_by_task_id', methods=['POST'])
 def query_repo_by_task_id():
+    """
+    使用任务id查血对应的代码仓库
+    :return:
+    """
     task_id = request.json.get('task_id')
     res = []
     task_relations = TaskRelation.query.filter_by(task_id=task_id).all()
@@ -96,6 +125,13 @@ def query_repo_by_task_id():
 
 
 def query_branches_by_repo_name_and_owner(owner_name, repo_name, update_time):
+    """
+    使用 仓库拥有者名字、仓库名称、仓库的更新时间查血该仓库的所有分支
+    :param owner_name:
+    :param repo_name:
+    :param update_time:
+    :return:
+    """
     repo_url = git_url + '/' + owner_name + '/' + repo_name + '.git'
     print(repo_url)
     path = './repos/' + owner_name + '/' + repo_name
@@ -103,10 +139,6 @@ def query_branches_by_repo_name_and_owner(owner_name, repo_name, update_time):
     time = path + '/' + str(update_time) + '.time'
     if os.path.exists(path):
         if not os.path.exists(time):
-            # repo = Repo(to_path)
-            # remote = repo.remote()
-            # remote.fetch()
-            # 删除本地文件
             rmtree(path)
             repo = Repo.clone_from(url=repo_url, to_path=path)
             with open(time, 'a') as f:
@@ -139,8 +171,10 @@ def query_branches_by_repo_name_and_owner(owner_name, repo_name, update_time):
 
 @app.route('/query_all_repo')
 def query_all_repo():
-    # repo = Repository(owner_name='wangyan', repo_name='hello world', lower_name='hello world')
-    # db.session.add(repo)
+    """
+    查血所有代码仓库
+    :return:
+    """
     repos = Repository.query.all()
     res = []
     for repo in repos:
@@ -152,6 +186,10 @@ def query_all_repo():
 
 @app.route('/query_branches_by_owner_and_name', methods=['POST'])
 def query_branches_by_owner_and_name():
+    """
+    查询代码仓库的所有分支
+    :return:
+    """
     print('query_branches_by_owner_and_name excute')
     # return os.getcwd()
     data = request.json
@@ -172,6 +210,10 @@ def query_branches_by_owner_and_name():
 
 @app.route('/query_file_by_owner_and_name_and_branch', methods=['POST'])
 def query_file_by_owner_and_name_and_branch():
+    """
+    查血代码仓库特定分支下的所有文件
+    :return:
+    """
     data_json = request.json
     owner_name = data_json.get('owner_name')
     repo_name = data_json.get('repo_name')
@@ -190,23 +232,34 @@ def query_file_by_owner_and_name_and_branch():
         print(command)
         cmd(command)
     files = scan_dir(path)
+    # rmtree(path)
     return JsonResponse.success(data=[files]).to_dict()
 
 
 @app.route('/query_all_model', methods=['GET'])
 def query_all_model():
+    """
+    查询所有模型
+    :return:
+    """
     model_list = Model.query.all()
     models = {}
     for model in model_list:
         if model.name not in models:
-            models[model.name] = [{'model_version': model.version, 'model_source': model.source}]
+            models[model.name] = [
+                {'model_version': model.version, 'model_source': model.source, 'create_time': model.create_time}]
         else:
-            models[model.name].append({'model_version': model.version, 'model_source': model.source})
+            models[model.name].append(
+                {'model_version': model.version, 'model_source': model.source, 'create_time': model.create_time})
     return JsonResponse.success(data=models).to_dict()
 
 
 @app.route('/download_model_by_name_and_version', methods=['POST'])
 def download_model_by_name_and_version():
+    """
+    通过模型名称和版本号下载对应模型到服务器
+    :return:
+    """
     model_name = request.json.get('model_name')
     model_version = request.json.get('model_version')
     model = Model.query.filter_by(name=model_name, version=model_version).all()
@@ -221,6 +274,10 @@ def download_model_by_name_and_version():
 
 @app.route('/change_branch_by_branch_name', methods=['POST'])
 def change_branch_by_name():
+    """
+    通过分支名称更改代码仓库的分支
+    :return:
+    """
     data = request.json
     owner_name = data.get('owner_name')
     repo_name = data.get('repo_name')
@@ -238,6 +295,10 @@ def change_branch_by_name():
 
 @app.route('/run_mlflow_project', methods=['POST'])
 def run_mlflow_project():
+    """
+    运行mlflow项目
+    :return:
+    """
     print('run run run run run run run')
     data = request.json
     owner_name = data.get('owner_name')
@@ -245,25 +306,36 @@ def run_mlflow_project():
     branch_name = data.get('branch_name')
     update_time = data.get('update_time')
     temp_version = data.get('temp_version')
+    model_names = data.get('model_names')
+    s3_models = data.get('s3_models')
+
+    repo_url = git_url + '/' + owner_name + '/' + repo_name + '.git'
     version = './temp/repos/' + owner_name + '/' + repo_name + '/' + temp_version
-    path = version+ '/' + repo_name
-    print('path : ' + path)
+    path = version + '/' + repo_name
+    # print('path : ' + path)
     if not os.path.exists(path):
         print('nothing')
         return JsonResponse.error(msg='There is no git directory').to_dict()
     cwd = os.getcwd()
     if not os.path.exists(path + '/.git'):
         print(path + '/.git 不存在')
+
+    for i in range(0, len(model_names)):
+        download_directory(download_path=get_model_source(s3_models[i][0], version=s3_models[i][1]))
+
     command = 'cd ' + cwd + ' && ' + \
               'cd ' + path + ' && ' + \
               'rm -rf .git &&' + \
               'cd ' + cwd + ' && ' + \
               'mlflow run ' + path
+    # command = 'mlflow run ' + repo_url + ' --version ' + branch_name
     print(command)
     cmd(command)
-    rmtree(version)
+    with open(path + '/' + 'mlflow_output') as f:
+        res = f.readlines()
+    # rmtree(version)
 
-    return JsonResponse.success(data=os.getcwd()).to_dict()
+    return JsonResponse.success(data=res).to_dict()
 
 
 @app.route('/test', methods=['POST'])
@@ -273,4 +345,6 @@ def test():
 
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=8081, debug=True)
+    # app.run(host='0.0.0.0', port=8083, debug=True)
+    # get_model_source('mini_model', 1)
+    download_directory('s3://models/0/48213a12f43f448ea97a11f2f67ec0e0/artifacts')
